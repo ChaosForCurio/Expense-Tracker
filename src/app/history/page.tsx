@@ -12,6 +12,7 @@ export default function HistoryPage() {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         fetchExpenses();
@@ -19,14 +20,18 @@ export default function HistoryPage() {
 
     const fetchExpenses = async () => {
         setLoading(true);
+        setError('');
         try {
             const res = await fetch(`/api/expenses?month=${selectedMonth}&year=${selectedYear}`);
             if (res.ok) {
                 const data = await res.json();
                 setExpenses(data);
+            } else {
+                setError('Failed to load expenses. Please try again later.');
             }
         } catch (error) {
             console.error('Failed to fetch expenses', error);
+            setError('Network error. Check your connection.');
         } finally {
             setLoading(false);
         }
@@ -74,6 +79,11 @@ export default function HistoryPage() {
                 </div>
 
                 <div className="space-y-4">
+                    {error && (
+                        <div className="bg-red-50 text-red-600 p-4 rounded-xl text-center">
+                            {error}
+                        </div>
+                    )}
                     {loading ? (
                         <p className="text-center text-slate-500">Loading...</p>
                     ) : expenses.length === 0 ? (

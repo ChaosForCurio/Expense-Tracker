@@ -7,6 +7,7 @@ import { Expense, Category, CATEGORIES } from '@/types';
 import { ExpenseForm } from '@/components/ExpenseForm';
 import { ExpenseList } from '@/components/ExpenseList';
 import { Summary } from '@/components/Summary';
+import { UserMenu } from '@/components/UserMenu';
 import Link from 'next/link';
 
 export default function Home() {
@@ -21,17 +22,31 @@ export default function Home() {
 
     const fetchExpenses = async () => {
         try {
+            setLoading(true);
             const res = await fetch('/api/expenses');
             if (res.ok) {
                 const data = await res.json();
                 setExpenses(data);
+            } else if (res.status === 401) {
+                setExpenses([]);
+            } else {
+                const text = await res.text();
+                let errorData;
+                try {
+                    errorData = JSON.parse(text);
+                } catch {
+                    errorData = { error: text || 'Unknown error' };
+                }
+                console.error('Failed to fetch expenses:', errorData);
             }
         } catch (error) {
-            console.error('Failed to fetch expenses', error);
+            console.error('Network error fetching expenses:', error);
         } finally {
             setLoading(false);
         }
     };
+
+
 
     const addExpense = async (newExpense: Omit<Expense, 'id'>) => {
         try {
@@ -44,9 +59,28 @@ export default function Home() {
             if (res.ok) {
                 const savedExpense = await res.json();
                 setExpenses((prev) => [savedExpense, ...prev]);
+            } else {
+                const text = await res.text();
+                let errorData;
+                try {
+                    errorData = JSON.parse(text);
+                } catch {
+                    errorData = { error: text || 'Unknown error' };
+                }
+                console.error('Failed to add expense:', errorData);
+
+                const errorMessage = `Error adding expense: ${errorData.details || errorData.error || 'Unknown error'}`;
+                alert(errorMessage);
+                throw new Error(errorMessage);
             }
         } catch (error) {
-            console.error('Failed to add expense', error);
+            // Rethrow so ExpenseForm knows to keep modal open
+            console.error('Network error adding expense:', error);
+            if (error instanceof Error && error.message.includes('Error adding expense')) {
+                throw error;
+            }
+            alert('Network error. Please try again.');
+            throw error;
         }
     };
 
@@ -91,9 +125,11 @@ export default function Home() {
                             <Settings size={18} />
                             <span className="hidden sm:inline">Settings</span>
                         </Link>
+                        <UserMenu />
                         <div className="h-6 w-px bg-slate-200 mx-2"></div>
                         <ExpenseForm onAdd={addExpense} />
                     </div>
+
                 </div>
             </header>
 

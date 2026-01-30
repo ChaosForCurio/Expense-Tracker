@@ -25,7 +25,7 @@ export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
   }, [] as { name: string; value: number }[]);
 
   const monthlyData = expenses.reduce((acc, exp) => {
-    const month = new Date(exp.date).toLocaleString('default', { month: 'short' });
+    const month = new Date(exp.date).toLocaleString('en-US', { month: 'short' });
     const existing = acc.find((item) => item.name === month);
     if (existing) {
       existing.value += exp.amount;

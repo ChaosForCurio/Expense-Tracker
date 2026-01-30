@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@stackframe/stack": "^2.8.62",
     "@types/pg": "^8.16.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",

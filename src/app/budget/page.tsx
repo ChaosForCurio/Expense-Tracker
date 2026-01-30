@@ -12,6 +12,7 @@ export default function BudgetPage() {
     const [year, setYear] = useState(new Date().getFullYear());
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [currentBudget, setCurrentBudget] = useState<{ amount: number } | null>(null);
 
     useEffect(() => {
         fetchBudget();
@@ -23,8 +24,11 @@ export default function BudgetPage() {
             if (res.ok) {
                 const data = await res.json();
                 setAmount(data.amount?.toString() || '');
+                setCurrentBudget(data.amount ? { amount: data.amount } : null);
             } else {
                 setAmount('');
+                setCurrentBudget(null);
+                // Optional: setMessage('Could not load current budget.')
             }
         } catch (error) {
             console.error('Failed to fetch budget', error);
@@ -50,10 +54,11 @@ export default function BudgetPage() {
             if (res.ok) {
                 setMessage('Budget saved successfully!');
             } else {
-                setMessage('Failed to save budget.');
+                const data = await res.json();
+                setMessage(data.error || 'Failed to save budget.');
             }
         } catch (error) {
-            setMessage('Error occurred.');
+            setMessage('Network error preventing save.');
         } finally {
             setLoading(false);
         }

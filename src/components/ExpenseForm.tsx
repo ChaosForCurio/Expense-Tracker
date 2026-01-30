@@ -6,7 +6,7 @@ import { Category, CATEGORIES, Expense } from '@/types';
 import { useCurrency } from '@/context/CurrencyContext';
 
 interface ExpenseFormProps {
-  onAdd: (expense: Omit<Expense, 'id'>) => void;
+  onAdd: (expense: Omit<Expense, 'id'>) => Promise<void>;
 }
 
 export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
@@ -16,23 +16,33 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<Category>('Food');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !amount) return;
 
-    onAdd({
-      title,
-      amount: parseFloat(amount),
-      category,
-      date,
-    });
+    try {
+      setIsSubmitting(true);
+      await onAdd({
+        title,
+        amount: parseFloat(amount),
+        category,
+        date,
+      });
 
-    setTitle('');
-    setAmount('');
-    setCategory('Food');
-    setDate(new Date().toISOString().split('T')[0]);
-    setIsOpen(false);
+      // Only clear and close on success (if onAdd throws, we skip this)
+      setTitle('');
+      setAmount('');
+      setCategory('Food');
+      setDate(new Date().toISOString().split('T')[0]);
+      setIsOpen(false);
+    } catch (error) {
+      // Error is already handled by parent (alert), but we keep form open
+      console.error("Form submission error", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) {
@@ -52,7 +62,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-slate-800">New Expense</h2>
-          <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-600">
+          <button
+            onClick={() => setIsOpen(false)}
+            className="text-slate-400 hover:text-slate-600"
+            disabled={isSubmitting}
+          >
             <X size={24} />
           </button>
         </div>
@@ -67,6 +81,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
               placeholder="e.g. Grocery Shopping"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -83,6 +98,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
                   onChange={(e) => setAmount(e.target.value)}
                   className="w-full pl-7 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                   placeholder="0.00"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -92,6 +108,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
                 value={category}
                 onChange={(e) => setCategory(e.target.value as Category)}
                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                disabled={isSubmitting}
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -110,14 +127,16 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              disabled={isSubmitting}
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition-colors mt-6 shadow-md"
+            disabled={isSubmitting}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-medium py-2.5 rounded-lg transition-colors mt-6 shadow-md flex justify-center items-center"
           >
-            Add Expense
+            {isSubmitting ? 'Adding...' : 'Add Expense'}
           </button>
         </form>
       </div>

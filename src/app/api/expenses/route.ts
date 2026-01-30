@@ -1,17 +1,23 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { stackServerApp } from "@/stack-server";
 
 export async function GET(request: Request) {
     try {
+        const user = await stackServerApp.getUser();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { searchParams } = new URL(request.url);
         const month = searchParams.get('month');
         const year = searchParams.get('year');
         const search = searchParams.get('search');
         const category = searchParams.get('category');
 
-        let sql = 'SELECT * FROM expenses WHERE 1=1';
-        const params: any[] = [];
-        let paramIndex = 1;
+        let sql = 'SELECT * FROM expenses WHERE user_id = $1';
+        const params: any[] = [user.id];
+        let paramIndex = 2; // Start from 2 since user_id is $1
 
         if (month && year) {
             // Extract month/year from date column
@@ -36,27 +42,44 @@ export async function GET(request: Request) {
 
         const result = await query(sql, params);
         return NextResponse.json(result.rows);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching expenses:', error);
-        return NextResponse.json({ error: 'Failed to fetch expenses' }, { status: 500 });
+        return NextResponse.json(
+            { error: 'Failed to fetch expenses', details: error.message },
+            { status: 500 }
+        );
     }
 }
 
 export async function POST(request: Request) {
     try {
+        const user = await stackServerApp.getUser();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await request.json();
         const { title, amount, date, category, note } = body;
 
+        // Validation
+        if (!title || !amount || !date || !category) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
         const sql = `
-      INSERT INTO expenses (title, amount, date, category, note)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO expenses (user_id, title, amount, date, category, note)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `;
 
-        const result = await query(sql, [title, amount, date, category, note]);
+        const result = await query(sql, [user.id, title, amount, date, category, note]);
         return NextResponse.json(result.rows[0], { status: 201 });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error adding expense:', error);
-        return NextResponse.json({ error: 'Failed to add expense' }, { status: 500 });
+        // Return detailed error in dev, generic in prod
+        return NextResponse.json(
+            { error: 'Failed to add expense', details: error.message },
+            { status: 500 }
+        );
     }
 }
