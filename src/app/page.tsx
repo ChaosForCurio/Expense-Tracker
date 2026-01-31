@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, Filter, Wallet, History, PieChart, Settings } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Expense, Category, CATEGORIES } from '@/types';
@@ -9,84 +9,29 @@ import { ExpenseList } from '@/components/ExpenseList';
 import { Summary } from '@/components/Summary';
 import { UserMenu } from '@/components/UserMenu';
 import Link from 'next/link';
+import { useExpenses } from '@/context/ExpenseContext';
 
 export default function Home() {
-    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const { expenses, loading, addExpense, deleteExpense } = useExpenses();
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
-    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchExpenses();
-    }, []);
+    // Remove local fetch logic as it is now handled by context
 
-    const fetchExpenses = async () => {
+    const handleAddExpense = async (newExpense: Omit<Expense, 'id'>) => {
         try {
-            setLoading(true);
-            const res = await fetch('/api/expenses');
-            if (res.ok) {
-                const data = await res.json();
-                setExpenses(data);
-            } else if (res.status === 401) {
-                setExpenses([]);
-            } else {
-                const text = await res.text();
-                let errorData;
-                try {
-                    errorData = JSON.parse(text);
-                } catch {
-                    errorData = { error: text || 'Unknown error' };
-                }
-                console.error('Failed to fetch expenses:', errorData);
-            }
+            await addExpense(newExpense);
         } catch (error) {
-            console.error('Network error fetching expenses:', error);
-        } finally {
-            setLoading(false);
+            alert('Failed to add expense. Please try again.');
         }
     };
 
-
-
-    const addExpense = async (newExpense: Omit<Expense, 'id'>) => {
+    const handleDeleteExpense = async (id: string) => {
         try {
-            const res = await fetch('/api/expenses', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newExpense),
-            });
-
-            if (res.ok) {
-                const savedExpense = await res.json();
-                setExpenses((prev) => [savedExpense, ...prev]);
-            } else {
-                const text = await res.text();
-                let errorData;
-                try {
-                    errorData = JSON.parse(text);
-                } catch {
-                    errorData = { error: text || 'Unknown error' };
-                }
-                console.error('Failed to add expense:', errorData);
-
-                const errorMessage = `Error adding expense: ${errorData.details || errorData.error || 'Unknown error'}`;
-                alert(errorMessage);
-                throw new Error(errorMessage);
-            }
+            await deleteExpense(id);
         } catch (error) {
-            // Rethrow so ExpenseForm knows to keep modal open
-            console.error('Network error adding expense:', error);
-            if (error instanceof Error && error.message.includes('Error adding expense')) {
-                throw error;
-            }
-            alert('Network error. Please try again.');
-            throw error;
+            alert('Failed to delete expense.');
         }
-    };
-
-    const deleteExpense = (id: string) => {
-        // Optimistic update - in real app, call DELETE API
-        setExpenses((prev) => prev.filter((exp) => exp.id !== id));
     };
 
     const filteredExpenses = useMemo(() => {
@@ -127,7 +72,7 @@ export default function Home() {
                         </Link>
                         <UserMenu />
                         <div className="h-6 w-px bg-slate-200 mx-2"></div>
-                        <ExpenseForm onAdd={addExpense} />
+                        <ExpenseForm onAdd={handleAddExpense} />
                     </div>
 
                 </div>
@@ -177,7 +122,7 @@ export default function Home() {
                     {loading ? (
                         <p className="text-center text-slate-500 py-10">Loading expenses...</p>
                     ) : (
-                        <ExpenseList expenses={filteredExpenses} onDelete={deleteExpense} />
+                        <ExpenseList expenses={filteredExpenses} onDelete={handleDeleteExpense} />
                     )}
                 </div>
             </main>

@@ -12,25 +12,27 @@ interface SummaryProps {
 export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
   const { formatCurrency } = useCurrency();
 
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalExpenses = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
 
   const categoryData = expenses.reduce((acc, exp) => {
+    const amount = Number(exp.amount) || 0;
     const existing = acc.find((item) => item.name === exp.category);
     if (existing) {
-      existing.value += exp.amount;
+      existing.value += amount;
     } else {
-      acc.push({ name: exp.category, value: exp.amount });
+      acc.push({ name: exp.category, value: amount });
     }
     return acc;
   }, [] as { name: string; value: number }[]);
 
   const monthlyData = expenses.reduce((acc, exp) => {
+    const amount = Number(exp.amount) || 0;
     const month = new Date(exp.date).toLocaleString('en-US', { month: 'short' });
     const existing = acc.find((item) => item.name === month);
     if (existing) {
-      existing.value += exp.amount;
+      existing.value += amount;
     } else {
-      acc.push({ name: month, value: exp.amount });
+      acc.push({ name: month, value: amount });
     }
     return acc;
   }, [] as { name: string; value: number }[]).sort((a, b) => {
