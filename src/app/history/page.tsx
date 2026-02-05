@@ -23,33 +23,8 @@ export default function HistoryPage() {
         }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [expenses, selectedMonth, selectedYear]);
 
-<<<<<<< HEAD
-    const fetchExpenses = async () => {
-        setLoading(true);
-        setError('');
-        try {
-            const res = await fetch(`/api/expenses?month=${selectedMonth}&year=${selectedYear}`);
-            if (res.ok) {
-                const data = await res.json();
-                setExpenses(data);
-            } else {
-                setError('Failed to load expenses. Please try again later.');
-            }
-        } catch (error) {
-            console.error('Failed to fetch expenses', error);
-            setError('Network error. Check your connection.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const totalAmount = expenses.reduce((sum, exp) => {
-        const amount = typeof exp.amount === 'string' ? parseFloat(exp.amount) : exp.amount;
-        return sum + (isNaN(amount) ? 0 : amount);
-    }, 0);
-=======
     const totalAmount = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
->>>>>>> 2e4aacbe24e80a48a742468f395086ca3cec849c
+
 
     return (
         <div className="min-h-screen bg-slate-50/50 p-6">
@@ -101,8 +76,7 @@ export default function HistoryPage() {
                     ) : filteredExpenses.length === 0 ? (
                         <p className="text-center text-slate-500 py-10">No expenses found for this period.</p>
                     ) : (
-<<<<<<< HEAD
-                        expenses.map((expense) => (
+                        filteredExpenses.map((expense) => (
                             <div key={expense.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center group">
                                 <div className="flex items-center gap-4">
                                     {expense.image_url && (
@@ -117,13 +91,7 @@ export default function HistoryPage() {
                                         <h3 className="font-semibold">{expense.title}</h3>
                                         <p className="text-xs text-slate-500">{new Date(expense.date).toLocaleDateString()} • {expense.category}</p>
                                     </div>
-=======
-                        filteredExpenses.map((expense) => (
-                            <div key={expense.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center">
-                                <div>
-                                    <h3 className="font-semibold">{expense.title}</h3>
-                                    <p className="text-xs text-slate-500">{new Date(expense.date).toLocaleDateString()} • {expense.category}</p>
->>>>>>> 2e4aacbe24e80a48a742468f395086ca3cec849c
+
                                 </div>
                                 <span className="font-bold text-slate-700">
                                     {formatCurrency(expense.amount)}

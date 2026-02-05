@@ -16,8 +16,6 @@ export default function Home() {
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
 
-    // Remove local fetch logic as it is now handled by context
-
     const handleAddExpense = async (newExpense: Omit<Expense, 'id'>) => {
         try {
             await addExpense(newExpense);
@@ -26,82 +24,6 @@ export default function Home() {
         }
     };
 
-<<<<<<< HEAD
-
-
-    const addExpense = async (newExpense: Omit<Expense, 'id'>) => {
-        const tempId = Math.random().toString(36).substring(7);
-        const optimisticExpense: Expense = { ...newExpense, id: tempId };
-
-        // Optimistic update
-        const previousExpenses = [...expenses];
-        setExpenses((prev) => [optimisticExpense, ...prev]);
-
-        try {
-            const res = await fetch('/api/expenses', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newExpense),
-            });
-
-            if (res.ok) {
-                const savedExpense = await res.json();
-                // Replace optimistic expense with actual saved expense
-                setExpenses((prev) => prev.map(exp => exp.id === tempId ? savedExpense : exp));
-            } else {
-                // Rollback on failure
-                setExpenses(previousExpenses);
-
-                const text = await res.text();
-                let errorData;
-                try {
-                    errorData = JSON.parse(text);
-                } catch {
-                    errorData = { error: text || 'Unknown error' };
-                }
-                console.error('Failed to add expense:', errorData);
-
-                const errorMessage = `Error adding expense: ${errorData.details || errorData.error || 'Unknown error'}`;
-                alert(errorMessage);
-                throw new Error(errorMessage);
-            }
-        } catch (error) {
-            // Rollback on network error
-            setExpenses(previousExpenses);
-
-            console.error('Network error adding expense:', error);
-            if (error instanceof Error && error.message.includes('Error adding expense')) {
-                throw error;
-            }
-            alert('Network error. Please try again.');
-            throw error;
-        }
-    };
-
-    const deleteExpense = async (id: string) => {
-        try {
-            // Optimistic update
-            const previousExpenses = [...expenses];
-            setExpenses((prev) => prev.filter((exp) => exp.id !== id));
-
-            const res = await fetch(`/api/expenses/${id}`, {
-                method: 'DELETE',
-            });
-
-            if (!res.ok) {
-                // Rollback on failure
-                setExpenses(previousExpenses);
-                const errorData = await res.json();
-                console.error('Failed to delete expense:', errorData);
-                alert(`Error deleting expense: ${errorData.details || errorData.error || 'Unknown error'}`);
-            }
-        } catch (error) {
-            console.error('Network error deleting expense:', error);
-            alert('Network error. Please try again.');
-        }
-    };
-
-=======
     const handleDeleteExpense = async (id: string) => {
         try {
             await deleteExpense(id);
@@ -109,8 +31,6 @@ export default function Home() {
             alert('Failed to delete expense.');
         }
     };
-
->>>>>>> 2e4aacbe24e80a48a742468f395086ca3cec849c
     const filteredExpenses = useMemo(() => {
         return expenses
             .filter((exp) => {

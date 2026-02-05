@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { stackServerApp } from "@/stack-server";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
     try {
         const user = await stackServerApp.getUser();
         if (!user) {
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
         const user = await stackServerApp.getUser();
         if (!user) {

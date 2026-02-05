@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { stackServerApp } from "@/stack-server";
 
 export async function DELETE(
-    request: Request,
-    { params }: { params: { id: string } }
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await stackServerApp.getUser();
@@ -12,7 +12,7 @@ export async function DELETE(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await params;
 
         const sql = 'DELETE FROM expenses WHERE id = $1 AND user_id = $2 RETURNING *';
         const result = await query(sql, [id, user.id]);

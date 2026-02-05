@@ -12,82 +12,52 @@ interface SummaryProps {
 export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
   const { formatCurrency } = useCurrency();
 
-<<<<<<< HEAD
-  const now = new Date();
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(now.getDate() - 30);
+  const { totalExpenses, last30DaysTotal, categoryData, monthlyData } = React.useMemo(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
 
-  const totalExpenses = expenses.reduce((sum, expense) => {
-    const amount = typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount;
-    return sum + (isNaN(amount) ? 0 : amount);
-  }, 0);
+    let total = 0;
+    let last30 = 0;
+    const categories: Record<string, number> = {};
+    const months: Record<string, { value: number; date: Date }> = {};
 
-  const last30DaysTotal = expenses
-    .filter(exp => {
-      const d = new Date(exp.date);
-      return !isNaN(d.getTime()) && d >= thirtyDaysAgo;
-    })
-    .reduce((sum, expense) => {
-      const amount = typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount;
-      return sum + (isNaN(amount) ? 0 : amount);
-    }, 0);
+    (expenses || []).forEach(exp => {
+      const amount = Number(exp.amount) || 0;
+      const date = new Date(exp.date);
+      const isInvalidDate = isNaN(date.getTime());
 
-  const categoryData = expenses.reduce((acc, exp) => {
-    const amount = typeof exp.amount === 'string' ? parseFloat(exp.amount) : exp.amount;
-    const value = isNaN(amount) ? 0 : amount;
-    if (value === 0) return acc;
+      total += amount;
+      if (!isInvalidDate && date >= thirtyDaysAgo) {
+        last30 += amount;
+      }
 
-    const existing = acc.find((item) => item.name === exp.category);
-    if (existing) {
-      existing.value += value;
-    } else {
-      acc.push({ name: exp.category, value });
-=======
-  const totalExpenses = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+      const category = exp.category || 'Other';
+      categories[category] = (categories[category] || 0) + amount;
 
-  const categoryData = expenses.reduce((acc, exp) => {
-    const amount = Number(exp.amount) || 0;
-    const existing = acc.find((item) => item.name === exp.category);
-    if (existing) {
-      existing.value += amount;
-    } else {
-      acc.push({ name: exp.category, value: amount });
->>>>>>> 2e4aacbe24e80a48a742468f395086ca3cec849c
-    }
-    return acc;
-  }, [] as { name: string; value: number }[]);
+      if (!isInvalidDate) {
+        const month = date.toLocaleString('en-US', { month: 'short' });
+        const year = date.getFullYear();
+        const label = `${month} ${year}`;
+        if (!months[label]) {
+          months[label] = { value: 0, date };
+        }
+        months[label].value += amount;
+      }
+    });
 
-  const monthlyData = expenses.reduce((acc, exp) => {
-<<<<<<< HEAD
-    const date = new Date(exp.date);
-    if (isNaN(date.getTime())) return acc;
-
-    const month = date.toLocaleString('en-US', { month: 'short' });
-    const year = date.getFullYear();
-    const label = `${month} ${year}`;
-
-    const amount = typeof exp.amount === 'string' ? parseFloat(exp.amount) : exp.amount;
-    const value = isNaN(amount) ? 0 : amount;
-
-    const existing = acc.find((item) => item.name === label);
-    if (existing) {
-      existing.value += value;
-    } else {
-      acc.push({ name: label, value, date });
-=======
-    const amount = Number(exp.amount) || 0;
-    const month = new Date(exp.date).toLocaleString('en-US', { month: 'short' });
-    const existing = acc.find((item) => item.name === month);
-    if (existing) {
-      existing.value += amount;
-    } else {
-      acc.push({ name: month, value: amount });
->>>>>>> 2e4aacbe24e80a48a742468f395086ca3cec849c
-    }
-    return acc;
-  }, [] as { name: string; value: number; date: Date }[])
-    .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .map(({ name, value }) => ({ name, value }));
+    return {
+      totalExpenses: total,
+      last30DaysTotal: last30,
+      categoryData: Object.entries(categories)
+        .filter(([_, value]) => value > 0)
+        .map(([name, value]) => ({ name, value })),
+      monthlyData: Object.entries(months)
+        .map(([name, { value, date }]) => ({ name, value, date }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
+        .map(({ name, value }) => ({ name, value }))
+    };
+  }, [expenses]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -125,7 +95,7 @@ export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value: any) => formatCurrency(Number(value) || 0)}
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
               />
             </PieChart>
@@ -151,7 +121,7 @@ export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
               />
               <Tooltip
                 cursor={{ fill: '#f8fafc' }}
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value: any) => formatCurrency(Number(value) || 0)}
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
               />
               <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { stackServerApp } from "@/stack-server";
 
@@ -8,7 +8,7 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest): Promise<Response> {
     try {
         const user = await stackServerApp.getUser();
         if (!user) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        return new Promise((resolve, reject) => {
+        return new Promise<NextResponse>((resolve) => {
             cloudinary.uploader.upload_stream(
                 { resource_type: 'auto', folder: 'expenses' },
                 (error, result) => {
