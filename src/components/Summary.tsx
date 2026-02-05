@@ -12,6 +12,7 @@ interface SummaryProps {
 export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
   const { formatCurrency } = useCurrency();
 
+<<<<<<< HEAD
   const now = new Date();
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(now.getDate() - 30);
@@ -41,11 +42,23 @@ export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
       existing.value += value;
     } else {
       acc.push({ name: exp.category, value });
+=======
+  const totalExpenses = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+
+  const categoryData = expenses.reduce((acc, exp) => {
+    const amount = Number(exp.amount) || 0;
+    const existing = acc.find((item) => item.name === exp.category);
+    if (existing) {
+      existing.value += amount;
+    } else {
+      acc.push({ name: exp.category, value: amount });
+>>>>>>> 2e4aacbe24e80a48a742468f395086ca3cec849c
     }
     return acc;
   }, [] as { name: string; value: number }[]);
 
   const monthlyData = expenses.reduce((acc, exp) => {
+<<<<<<< HEAD
     const date = new Date(exp.date);
     if (isNaN(date.getTime())) return acc;
 
@@ -61,6 +74,15 @@ export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
       existing.value += value;
     } else {
       acc.push({ name: label, value, date });
+=======
+    const amount = Number(exp.amount) || 0;
+    const month = new Date(exp.date).toLocaleString('en-US', { month: 'short' });
+    const existing = acc.find((item) => item.name === month);
+    if (existing) {
+      existing.value += amount;
+    } else {
+      acc.push({ name: month, value: amount });
+>>>>>>> 2e4aacbe24e80a48a742468f395086ca3cec849c
     }
     return acc;
   }, [] as { name: string; value: number; date: Date }[])

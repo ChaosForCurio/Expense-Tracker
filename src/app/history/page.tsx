@@ -1,23 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Expense } from '@/types';
+import { useState } from 'react';
 import { ArrowLeft, Filter, Calendar, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useCurrency } from '@/context/CurrencyContext';
+import { useExpenses } from '@/context/ExpenseContext';
+import { useMemo } from 'react';
 
 export default function HistoryPage() {
     const { formatCurrency } = useCurrency();
-    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const { expenses, loading, error: contextError } = useExpenses();
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
 
-    useEffect(() => {
-        fetchExpenses();
-    }, [selectedMonth, selectedYear]);
+    // Filter expenses based on selected month and year
+    // We filter the GLOBAL expenses list instead of fetching from API
+    const filteredExpenses = useMemo(() => {
+        return expenses.filter(expense => {
+            const date = new Date(expense.date);
+            // Javascript months are 0-indexed, but our state is 1-indexed
+            return (date.getMonth() + 1) === selectedMonth && date.getFullYear() === selectedYear;
+        }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [expenses, selectedMonth, selectedYear]);
 
+<<<<<<< HEAD
     const fetchExpenses = async () => {
         setLoading(true);
         setError('');
@@ -41,6 +47,9 @@ export default function HistoryPage() {
         const amount = typeof exp.amount === 'string' ? parseFloat(exp.amount) : exp.amount;
         return sum + (isNaN(amount) ? 0 : amount);
     }, 0);
+=======
+    const totalAmount = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+>>>>>>> 2e4aacbe24e80a48a742468f395086ca3cec849c
 
     return (
         <div className="min-h-screen bg-slate-50/50 p-6">
@@ -82,16 +91,17 @@ export default function HistoryPage() {
                 </div>
 
                 <div className="space-y-4">
-                    {error && (
+                    {contextError && (
                         <div className="bg-red-50 text-red-600 p-4 rounded-xl text-center">
-                            {error}
+                            {contextError}
                         </div>
                     )}
                     {loading ? (
                         <p className="text-center text-slate-500">Loading...</p>
-                    ) : expenses.length === 0 ? (
+                    ) : filteredExpenses.length === 0 ? (
                         <p className="text-center text-slate-500 py-10">No expenses found for this period.</p>
                     ) : (
+<<<<<<< HEAD
                         expenses.map((expense) => (
                             <div key={expense.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center group">
                                 <div className="flex items-center gap-4">
@@ -107,6 +117,13 @@ export default function HistoryPage() {
                                         <h3 className="font-semibold">{expense.title}</h3>
                                         <p className="text-xs text-slate-500">{new Date(expense.date).toLocaleDateString()} • {expense.category}</p>
                                     </div>
+=======
+                        filteredExpenses.map((expense) => (
+                            <div key={expense.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <h3 className="font-semibold">{expense.title}</h3>
+                                    <p className="text-xs text-slate-500">{new Date(expense.date).toLocaleDateString()} • {expense.category}</p>
+>>>>>>> 2e4aacbe24e80a48a742468f395086ca3cec849c
                                 </div>
                                 <span className="font-bold text-slate-700">
                                     {formatCurrency(expense.amount)}
