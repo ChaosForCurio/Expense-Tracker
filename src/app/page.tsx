@@ -49,6 +49,13 @@ export default function Home() {
 
 
     const addExpense = async (newExpense: Omit<Expense, 'id'>) => {
+        const tempId = Math.random().toString(36).substring(7);
+        const optimisticExpense: Expense = { ...newExpense, id: tempId };
+
+        // Optimistic update
+        const previousExpenses = [...expenses];
+        setExpenses((prev) => [optimisticExpense, ...prev]);
+
         try {
             const res = await fetch('/api/expenses', {
                 method: 'POST',
@@ -58,8 +65,12 @@ export default function Home() {
 
             if (res.ok) {
                 const savedExpense = await res.json();
-                setExpenses((prev) => [savedExpense, ...prev]);
+                // Replace optimistic expense with actual saved expense
+                setExpenses((prev) => prev.map(exp => exp.id === tempId ? savedExpense : exp));
             } else {
+                // Rollback on failure
+                setExpenses(previousExpenses);
+
                 const text = await res.text();
                 let errorData;
                 try {
@@ -74,7 +85,9 @@ export default function Home() {
                 throw new Error(errorMessage);
             }
         } catch (error) {
-            // Rethrow so ExpenseForm knows to keep modal open
+            // Rollback on network error
+            setExpenses(previousExpenses);
+
             console.error('Network error adding expense:', error);
             if (error instanceof Error && error.message.includes('Error adding expense')) {
                 throw error;
@@ -84,9 +97,27 @@ export default function Home() {
         }
     };
 
-    const deleteExpense = (id: string) => {
-        // Optimistic update - in real app, call DELETE API
-        setExpenses((prev) => prev.filter((exp) => exp.id !== id));
+    const deleteExpense = async (id: string) => {
+        try {
+            // Optimistic update
+            const previousExpenses = [...expenses];
+            setExpenses((prev) => prev.filter((exp) => exp.id !== id));
+
+            const res = await fetch(`/api/expenses/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) {
+                // Rollback on failure
+                setExpenses(previousExpenses);
+                const errorData = await res.json();
+                console.error('Failed to delete expense:', errorData);
+                alert(`Error deleting expense: ${errorData.details || errorData.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Network error deleting expense:', error);
+            alert('Network error. Please try again.');
+        }
     };
 
     const filteredExpenses = useMemo(() => {

@@ -59,7 +59,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { title, amount, date, category, note } = body;
+        const { title, amount, date, category, note, image_url } = body;
 
         // Validation
         if (!title || !amount || !date || !category) {
@@ -67,12 +67,12 @@ export async function POST(request: Request) {
         }
 
         const sql = `
-      INSERT INTO expenses (user_id, title, amount, date, category, note)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO expenses (user_id, title, amount, date, category, note, image_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `;
 
-        const result = await query(sql, [user.id, title, amount, date, category, note]);
+        const result = await query(sql, [user.id, title, amount, date, category, note, image_url]);
         return NextResponse.json(result.rows[0], { status: 201 });
     } catch (error: any) {
         console.error('Error adding expense:', error);

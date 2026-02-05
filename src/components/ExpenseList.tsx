@@ -61,7 +61,19 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDelete }) 
             {expenses.map((expense) => (
               <tr key={expense.id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-6 py-4">
-                  <div className="font-medium text-slate-900">{expense.title}</div>
+                  <div className="flex items-center gap-3">
+                    {expense.image_url && (
+                      <div className="flex-shrink-0">
+                        <img
+                          src={expense.image_url}
+                          alt={expense.title}
+                          className="h-10 w-10 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-110 transition-transform"
+                          onClick={() => window.open(expense.image_url, '_blank')}
+                        />
+                      </div>
+                    )}
+                    <div className="font-medium text-slate-900">{expense.title}</div>
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${CategoryColor[expense.category]}`}>

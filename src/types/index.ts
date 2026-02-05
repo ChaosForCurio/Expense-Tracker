@@ -1,10 +1,10 @@
-export type Category = 
-  | 'Food' 
-  | 'Transport' 
-  | 'Entertainment' 
-  | 'Shopping' 
-  | 'Utilities' 
-  | 'Health' 
+export type Category =
+  | 'Food'
+  | 'Transport'
+  | 'Entertainment'
+  | 'Shopping'
+  | 'Utilities'
+  | 'Health'
   | 'Other';
 
 export interface Expense {
@@ -14,6 +14,7 @@ export interface Expense {
   date: string;
   category: Category;
   note?: string;
+  image_url?: string;
 }
 
 export const CATEGORIES: Category[] = [

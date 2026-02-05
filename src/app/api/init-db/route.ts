@@ -13,12 +13,14 @@ export async function GET() {
         date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         category TEXT NOT NULL,
         note TEXT,
+        image_url TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
     // Add user_id column if it doesn't exist (manual migration for existing table)
     await query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS user_id TEXT;`);
+    await query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS image_url TEXT;`);
 
     // Create budgets table
     await query(`

@@ -37,7 +37,10 @@ export default function HistoryPage() {
         }
     };
 
-    const totalAmount = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+    const totalAmount = expenses.reduce((sum, exp) => {
+        const amount = typeof exp.amount === 'string' ? parseFloat(exp.amount) : exp.amount;
+        return sum + (isNaN(amount) ? 0 : amount);
+    }, 0);
 
     return (
         <div className="min-h-screen bg-slate-50/50 p-6">
@@ -74,7 +77,7 @@ export default function HistoryPage() {
                     </div>
                     <div className="text-right">
                         <p className="text-sm text-slate-500">Total Spent</p>
-                        <p className="text-2xl font-bold text-indigo-600">${totalAmount.toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-indigo-600">{formatCurrency(totalAmount)}</p>
                     </div>
                 </div>
 
@@ -90,10 +93,20 @@ export default function HistoryPage() {
                         <p className="text-center text-slate-500 py-10">No expenses found for this period.</p>
                     ) : (
                         expenses.map((expense) => (
-                            <div key={expense.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center">
-                                <div>
-                                    <h3 className="font-semibold">{expense.title}</h3>
-                                    <p className="text-xs text-slate-500">{new Date(expense.date).toLocaleDateString()} • {expense.category}</p>
+                            <div key={expense.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center group">
+                                <div className="flex items-center gap-4">
+                                    {expense.image_url && (
+                                        <img
+                                            src={expense.image_url}
+                                            alt={expense.title}
+                                            className="h-12 w-12 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-110 transition-transform"
+                                            onClick={() => window.open(expense.image_url, '_blank')}
+                                        />
+                                    )}
+                                    <div>
+                                        <h3 className="font-semibold">{expense.title}</h3>
+                                        <p className="text-xs text-slate-500">{new Date(expense.date).toLocaleDateString()} • {expense.category}</p>
+                                    </div>
                                 </div>
                                 <span className="font-bold text-slate-700">
                                     {formatCurrency(expense.amount)}
