@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PlusCircle, X } from 'lucide-react';
+import { PlusCircle, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { Category, CATEGORIES, Expense } from '@/types';
 import { useCurrency } from '@/context/CurrencyContext';
 
@@ -19,16 +19,43 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      processFile(file);
+    }
+  };
+
+  const processFile = (file: File) => {
+    if (!file.type.startsWith('image/')) return;
+
+    setImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
     }
   };
 
@@ -91,10 +118,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
+        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-colors shadow-sm"
+        aria-label="Add Expense"
       >
         <PlusCircle size={20} />
-        Add Expense
+        <span className="hidden sm:inline">Add Expense</span>
       </button>
     );
   }
@@ -175,23 +203,53 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Receipt Image (Optional)</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-              disabled={isSubmitting}
-            />
-            {imagePreview && (
-              <div className="mt-2 relative inline-block">
-                <img src={imagePreview} alt="Preview" className="h-20 w-20 object-cover rounded-lg border border-slate-200" />
-                <button
-                  type="button"
-                  onClick={() => { setImage(null); setImagePreview(null); }}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-sm hover:bg-red-600"
-                >
-                  <X size={12} />
-                </button>
+
+            {!imagePreview ? (
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`
+                  relative border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 ease-in-out
+                  ${isDragging
+                    ? 'border-indigo-500 bg-indigo-50/50 scale-[1.02]'
+                    : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                  }
+                `}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  disabled={isSubmitting}
+                />
+                <div className="flex flex-col items-center gap-2 pointer-events-none">
+                  <div className={`p-3 rounded-full ${isDragging ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
+                    <Upload size={24} />
+                  </div>
+                  <div className="text-sm text-slate-600">
+                    <span className="font-semibold text-indigo-600">Click to upload</span> or drag and drop
+                  </div>
+                  <p className="text-xs text-slate-400">PNG, JPG, GIF (max. 5MB)</p>
+                </div>
+              </div>
+            ) : (
+              <div className="relative rounded-xl overflow-hidden border border-slate-200 group">
+                <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover" />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => { setImage(null); setImagePreview(null); }}
+                    className="bg-red-500 text-white rounded-full p-2 shadow-lg hover:bg-red-600 transition-transform hover:scale-110"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+                  <ImageIcon size={12} />
+                  Image selected
+                </div>
               </div>
             )}
           </div>

@@ -60,7 +60,7 @@ export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
   }, [expenses]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       {/* Total Card */}
       <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
         <h3 className="text-indigo-100 font-medium mb-1">Total Expenses</h3>
@@ -104,7 +104,7 @@ export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
       </div>
 
       {/* Monthly Trend */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 md:col-span-2 lg:col-span-1">
         <h3 className="text-slate-800 font-semibold mb-4">Spending Trend</h3>
         <div className="h-[200px] w-full">
           <ResponsiveContainer width="100%" height="100%">
