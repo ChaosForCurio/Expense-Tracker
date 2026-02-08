@@ -1,9 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Expense, CATEGORY_COLORS } from '@/types';
 import { useCurrency } from '@/context/CurrencyContext';
+import { cn } from '@/utils/cn';
+import { motion } from 'framer-motion';
 
 interface SummaryProps {
   expenses: Expense[];
@@ -11,6 +13,25 @@ interface SummaryProps {
 
 export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
   const { formatCurrency } = useCurrency();
+  const [budgetLimit, setBudgetLimit] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchBudget = async () => {
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
+      try {
+        const res = await fetch(`/api/budget?month=${month}&year=${year}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.amount) setBudgetLimit(data.amount);
+        }
+      } catch (error) {
+        console.error('Failed to fetch budget in summary', error);
+      }
+    };
+    fetchBudget();
+  }, []);
 
   const { totalExpenses, last30DaysTotal, categoryData, monthlyData } = React.useMemo(() => {
     const now = new Date();
@@ -59,34 +80,71 @@ export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
     };
   }, [expenses]);
 
+  const percentSpent = budgetLimit ? (last30DaysTotal / budgetLimit) * 100 : 0;
+  const isOverBudget = budgetLimit ? last30DaysTotal > budgetLimit : false;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       {/* Total Card */}
-      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
-        <h3 className="text-indigo-100 font-medium mb-1">Total Expenses</h3>
-        <p className="text-4xl font-bold">{formatCurrency(last30DaysTotal)}</p>
-        <div className="flex justify-between items-end mt-2">
-          <p className="text-indigo-100 text-sm opacity-80">
-            Last 30 days
-          </p>
-          <p className="text-indigo-100 text-xs opacity-60">
-            All time: {formatCurrency(totalExpenses)}
-          </p>
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+        <div>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h3 className="text-slate-500 text-sm font-medium mb-1">Total Spending</h3>
+              <p className="text-3xl font-bold text-slate-900">{formatCurrency(last30DaysTotal)}</p>
+            </div>
+            {budgetLimit && (
+              <div className={cn(
+                "px-2 py-1 rounded-lg text-xs font-bold",
+                isOverBudget ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"
+              )}>
+                {percentSpent.toFixed(0)}%
+              </div>
+            )}
+          </div>
+
+          {budgetLimit ? (
+            <div className="space-y-2">
+              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(percentSpent, 100)}%` }}
+                  className={cn(
+                    "h-full rounded-full transition-colors",
+                    isOverBudget ? "bg-red-500" : "bg-indigo-600"
+                  )}
+                />
+              </div>
+              <p className="text-[10px] text-slate-400 font-medium">
+                {isOverBudget
+                  ? `Over budget by ${formatCurrency(last30DaysTotal - budgetLimit)}`
+                  : `${formatCurrency(budgetLimit - last30DaysTotal)} remaining in budget`
+                }
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400">Set a budget to track utilization</p>
+          )}
+        </div>
+
+        <div className="mt-6 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-50 pt-4">
+          <span>Last 30 days</span>
+          <span>All time: {formatCurrency(totalExpenses)}</span>
         </div>
       </div>
 
       {/* Category Distribution */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-        <h3 className="text-slate-800 font-semibold mb-4">By Category</h3>
-        <div className="h-[200px] w-full">
+        <h3 className="text-slate-800 font-semibold mb-4 text-sm">By Category</h3>
+        <div className="h-[140px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={categoryData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={80}
+                innerRadius={45}
+                outerRadius={60}
                 paddingAngle={5}
                 dataKey="value"
               >
@@ -105,8 +163,8 @@ export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
 
       {/* Monthly Trend */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 md:col-span-2 lg:col-span-1">
-        <h3 className="text-slate-800 font-semibold mb-4">Spending Trend</h3>
-        <div className="h-[200px] w-full">
+        <h3 className="text-slate-800 font-semibold mb-4 text-sm">Spending Trend</h3>
+        <div className="h-[140px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -114,11 +172,9 @@ export const Summary: React.FC<SummaryProps> = ({ expenses }) => {
                 dataKey="name"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                tick={{ fill: '#94a3b8', fontSize: 10 }}
               />
-              <YAxis
-                hide
-              />
+              <YAxis hide />
               <Tooltip
                 cursor={{ fill: '#f8fafc' }}
                 formatter={(value: any) => formatCurrency(Number(value) || 0)}

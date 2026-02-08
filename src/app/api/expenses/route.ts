@@ -83,3 +83,22 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const user = await stackServerApp.getUser();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const sql = 'DELETE FROM expenses WHERE user_id = $1';
+        await query(sql, [user.id]);
+        return NextResponse.json({ message: 'All expenses cleared successfully' });
+    } catch (error: any) {
+        console.error('Error clearing expenses:', error);
+        return NextResponse.json(
+            { error: 'Failed to clear expenses', details: error.message },
+            { status: 500 }
+        );
+    }
+}

@@ -9,6 +9,7 @@ interface ExpenseContextType {
     error: string | null;
     addExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
     deleteExpense: (id: string) => Promise<void>;
+    clearExpenses: () => Promise<void>;
     refreshExpenses: () => Promise<void>;
 }
 
@@ -91,8 +92,23 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const clearExpenses = async () => {
+        try {
+            const res = await fetch('/api/expenses', { method: 'DELETE' });
+            if (res.ok) {
+                setExpenses([]);
+            } else {
+                const text = await res.text();
+                throw new Error(text || 'Failed to clear expenses');
+            }
+        } catch (error) {
+            console.error('Error clearing expenses:', error);
+            throw error;
+        }
+    };
+
     return (
-        <ExpenseContext.Provider value={{ expenses, loading, error, addExpense, deleteExpense, refreshExpenses: fetchExpenses }}>
+        <ExpenseContext.Provider value={{ expenses, loading, error, addExpense, deleteExpense, clearExpenses, refreshExpenses: fetchExpenses }}>
             {children}
         </ExpenseContext.Provider>
     );

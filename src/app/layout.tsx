@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import { ClientProviders } from '@/components/ClientProviders';
+import { PageTransition } from '@/components/PageTransition';
 
 export const metadata: Metadata = {
     title: "SpendWise | Personal Finance Tracker",
@@ -31,7 +32,9 @@ export default function RootLayout({
                     `}
                 </Script>
                 <ClientProviders>
-                    {children}
+                    <PageTransition>
+                        {children}
+                    </PageTransition>
                 </ClientProviders>
             </body>
         </html>
