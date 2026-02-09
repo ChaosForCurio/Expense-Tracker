@@ -9,7 +9,6 @@ import {
     Trash2,
     Info,
     ChevronRight,
-    Shield,
     Bell,
     CheckCircle2,
     AlertTriangle,
@@ -19,7 +18,8 @@ import {
     Image as ImageIcon,
     Link as LinkIcon,
     Upload,
-    X
+    X,
+    Wallet
 } from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from "@stackframe/stack";
@@ -49,7 +49,6 @@ export default function SettingsPage() {
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [tempProfileImage, setTempProfileImage] = useState<string | null>(null);
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-    const [securityEnabled, setSecurityEnabled] = useState(false);
     const [showSuccess, setShowSuccess] = useState<string | null>(null);
     const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
 
@@ -74,7 +73,6 @@ export default function SettingsPage() {
         }
 
         if (savedNotif !== null) setNotificationsEnabled(savedNotif === 'true');
-        if (savedSecurity !== null) setSecurityEnabled(savedSecurity === 'true');
     }, [user]);
 
     useEffect(() => {
@@ -92,10 +90,6 @@ export default function SettingsPage() {
     useEffect(() => {
         localStorage.setItem('notifications_enabled', String(notificationsEnabled));
     }, [notificationsEnabled]);
-
-    useEffect(() => {
-        localStorage.setItem('security_enabled', String(securityEnabled));
-    }, [securityEnabled]);
 
     const handleExport = async () => {
         setExporting(true);
@@ -268,31 +262,6 @@ export default function SettingsPage() {
                                 </div>
                             </div>
 
-                            {/* Security Toggle */}
-                            <div
-                                onClick={() => setSecurityEnabled(!securityEnabled)}
-                                className="p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors cursor-pointer group"
-                            >
-                                <div className="p-2 bg-green-50 text-green-600 rounded-xl">
-                                    <Shield size={20} />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-semibold text-slate-800">Biometric Security</p>
-                                    <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">
-                                        {securityEnabled ? 'High • PIN & Biometrics' : 'None • Quick Access'}
-                                    </p>
-                                </div>
-                                <div className={cn(
-                                    "w-12 h-6 rounded-full relative transition-colors duration-300",
-                                    securityEnabled ? 'bg-green-600' : 'bg-slate-200'
-                                )}>
-                                    <motion.div
-                                        className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm"
-                                        animate={{ x: securityEnabled ? 24 : 0 }}
-                                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                    />
-                                </div>
-                            </div>
                         </div>
                     </motion.div>
 
