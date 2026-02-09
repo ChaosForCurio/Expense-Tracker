@@ -11,7 +11,7 @@ export const exportExpensesToCSV = (expenses: Expense[]) => {
             `"${exp.title.replace(/"/g, '""')}"`,
             exp.amount,
             exp.category,
-            `"${(exp.description || '').replace(/"/g, '""')}"`
+            `"${(exp.note || '').replace(/"/g, '""')}"`
         ].join(','))
     ];
 
