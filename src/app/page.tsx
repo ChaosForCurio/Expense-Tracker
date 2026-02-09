@@ -1,29 +1,18 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, Filter, Wallet, History, PieChart, Settings } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Expense, Category, CATEGORIES } from '@/types';
-import { ExpenseForm } from '@/components/ExpenseForm';
+import { Category, CATEGORIES } from '@/types';
 import { ExpenseList } from '@/components/ExpenseList';
 import { Summary } from '@/components/Summary';
-import { UserMenu } from '@/components/UserMenu';
-import Link from 'next/link';
 import { useExpenses } from '@/context/ExpenseContext';
 import { motion } from 'framer-motion';
 
 export default function Home() {
-    const { expenses, loading, addExpense, deleteExpense } = useExpenses();
+    const { expenses, loading, deleteExpense } = useExpenses();
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
-
-    const handleAddExpense = async (newExpense: Omit<Expense, 'id'>) => {
-        try {
-            await addExpense(newExpense);
-        } catch (error) {
-            alert('Failed to add expense. Please try again.');
-        }
-    };
 
     const handleDeleteExpense = async (id: string) => {
         try {
@@ -59,43 +48,7 @@ export default function Home() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50/50 text-slate-900 font-sans">
-            {/* Header */}
-            <motion.header
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="bg-white border-b border-slate-200 sticky top-0 z-30"
-            >
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                            <Wallet className="text-white" size={20} />
-                        </div>
-                        <h1 className="text-xl font-bold premium-gradient">
-                            SpendWise
-                        </h1>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Link href="/history" className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition">
-                            <History size={18} />
-                            <span className="hidden sm:inline">History</span>
-                        </Link>
-                        <Link href="/budget" className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition">
-                            <PieChart size={18} />
-                            <span className="hidden sm:inline">Budget</span>
-                        </Link>
-                        <Link href="/settings" className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition">
-                            <Settings size={18} />
-                            <span className="hidden sm:inline">Settings</span>
-                        </Link>
-                        <UserMenu />
-                        <div className="h-6 w-px bg-slate-200 mx-2"></div>
-                        <ExpenseForm onAdd={handleAddExpense} />
-                    </div>
-
-                </div>
-            </motion.header>
-
+        <div className="text-slate-900 font-sans">
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
                 <motion.div
                     variants={containerVariants}

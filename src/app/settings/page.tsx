@@ -25,9 +25,11 @@ import Link from 'next/link';
 import { useUser } from "@stackframe/stack";
 import { useCurrency, AVAILABLE_CURRENCIES, CurrencyCode } from '@/context/CurrencyContext';
 import { useExpenses } from '@/context/ExpenseContext';
-import { exportExpensesToCSV } from '@/utils/export';
+import { exportExpensesToCSV, exportExpensesToJSON } from '@/utils/export';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/cn';
+
+const TOAST_DURATION = 3000;
 
 export default function SettingsPage() {
     const user = useUser();
@@ -48,6 +50,8 @@ export default function SettingsPage() {
     const [tempProfileImage, setTempProfileImage] = useState<string | null>(null);
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [securityEnabled, setSecurityEnabled] = useState(false);
+    const [showSuccess, setShowSuccess] = useState<string | null>(null);
+    const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
 
     // Persistence
     useEffect(() => {
@@ -95,9 +99,19 @@ export default function SettingsPage() {
 
     const handleExport = async () => {
         setExporting(true);
-        await new Promise(r => setTimeout(r, 600));
-        exportExpensesToCSV(expenses);
+        await new Promise(r => setTimeout(r, 800));
+        if (exportFormat === 'csv') {
+            exportExpensesToCSV(expenses);
+        } else {
+            exportExpensesToJSON(expenses);
+        }
         setExporting(false);
+        triggerSuccess('Data exported successfully!');
+    };
+
+    const triggerSuccess = (message: string) => {
+        setShowSuccess(message);
+        setTimeout(() => setShowSuccess(null), TOAST_DURATION);
     };
 
     const handleClearAll = async () => {
@@ -117,6 +131,7 @@ export default function SettingsPage() {
             setUserName(tempUserName.trim());
             setProfileImage(tempProfileImage);
             setShowProfileModal(false);
+            triggerSuccess('Profile updated successfully!');
         }
     };
 
@@ -155,15 +170,10 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 pb-20">
             <div className="max-w-xl mx-auto space-y-8">
-                <header className="flex items-center gap-4">
-                    <Link href="/" className="p-2 hover:bg-white bg-white/50 border border-slate-200 rounded-xl transition-all hover:shadow-sm">
-                        <ArrowLeft size={20} />
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-                        <p className="text-sm text-slate-500">Manage your profile and preferences</p>
-                    </div>
-                </header>
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
+                    <p className="text-sm text-slate-500">Manage your profile and preferences</p>
+                </div>
 
                 <motion.div
                     variants={containerVariants}
@@ -290,20 +300,40 @@ export default function SettingsPage() {
                     <motion.div variants={itemVariants} className="space-y-4">
                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Data & Privacy</h3>
                         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 divide-y divide-slate-100 overflow-hidden">
-                            <button
-                                onClick={handleExport}
-                                disabled={exporting || expenses.length === 0}
-                                className="w-full text-left p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors group disabled:opacity-50"
-                            >
-                                <div className="p-2 bg-slate-100 text-slate-600 rounded-xl group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                                    {exporting ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+                            <div className="p-4 space-y-4">
+                                <div className="flex items-center gap-4 group">
+                                    <div className="p-2 bg-slate-100 text-slate-600 rounded-xl group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                                        {exporting ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-semibold text-slate-800">Export Transactions</p>
+                                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Local download • Selected format</p>
+                                    </div>
+                                    <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
+                                        {(['csv', 'json'] as const).map((format) => (
+                                            <button
+                                                key={format}
+                                                onClick={() => setExportFormat(format)}
+                                                className={cn(
+                                                    "px-3 py-1 rounded-lg text-xs font-bold transition-all",
+                                                    exportFormat === format
+                                                        ? "bg-white text-indigo-600 shadow-sm"
+                                                        : "text-slate-500 hover:text-slate-700"
+                                                )}
+                                            >
+                                                {format.toUpperCase()}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-semibold text-slate-800">Export All Transactions</p>
-                                    <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">CSV Format • Local Download</p>
-                                </div>
-                                <ChevronRight size={18} className="text-slate-300 group-hover:text-indigo-600 transition-colors" />
-                            </button>
+                                <button
+                                    onClick={handleExport}
+                                    disabled={exporting || expenses.length === 0}
+                                    className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-100 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {exporting ? 'Generating...' : `Download ${exportFormat.toUpperCase()}`}
+                                </button>
+                            </div>
 
                             <button
                                 onClick={() => setShowClearConfirm(true)}
@@ -322,23 +352,39 @@ export default function SettingsPage() {
                     </motion.div>
 
                     {/* About Section */}
-                    <motion.div variants={itemVariants} className="p-6 bg-slate-900 rounded-3xl text-white relative overflow-hidden group">
-                        <div className="relative z-10 space-y-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 bg-indigo-500 rounded flex items-center justify-center">
-                                    <CheckCircle2 size={14} />
+                    <motion.div variants={itemVariants} className="p-8 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[2.5rem] text-white relative overflow-hidden group shadow-2xl shadow-indigo-900/20">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-indigo-500/20 transition-colors duration-1000" />
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-600/10 rounded-full -ml-32 -mb-32 blur-3xl group-hover:bg-violet-600/20 transition-colors duration-1000" />
+
+                        <div className="relative z-10 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
+                                        <Wallet className="text-indigo-400" size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-lg">SpendWise</h4>
+                                        <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Premium Expense Tracking</p>
+                                    </div>
                                 </div>
-                                <span className="text-xs font-bold uppercase tracking-widest">Version 2.1.0 (Stable)</span>
+                                <div className="px-3 py-1 bg-indigo-500/20 rounded-full border border-indigo-500/30">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-300">v2.1.0</span>
+                                </div>
                             </div>
-                            <p className="text-sm text-white/70 leading-relaxed">
-                                SpendWise is built with care to help you take control of your financial future. Thank you for being with us!
+
+                            <p className="text-sm text-slate-300 leading-relaxed font-medium">
+                                Take control of your financial destiny with SpentWise. Precision tracking meets effortless design to give you a clearer vision of your wealth.
                             </p>
-                            <div className="flex gap-4">
-                                <button className="text-xs font-bold text-white hover:text-indigo-400 transition-colors">Rate on App Store</button>
-                                <button className="text-xs font-bold text-white hover:text-indigo-400 transition-colors">Send Feedback</button>
+
+                            <div className="flex items-center gap-6">
+                                <button className="text-xs font-bold text-white/50 hover:text-white transition-colors flex items-center gap-2 group/btn">
+                                    Rate Us <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                                </button>
+                                <button className="text-xs font-bold text-white/50 hover:text-white transition-colors flex items-center gap-2 group/btn">
+                                    Feedback <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                                </button>
                             </div>
                         </div>
-                        <Info className="absolute -right-4 -bottom-4 w-32 h-32 text-white/5 rotate-12" />
                     </motion.div>
                 </motion.div>
             </div>
@@ -509,6 +555,23 @@ export default function SettingsPage() {
                             </div>
                         </motion.div>
                     </div>
+                )}
+            </AnimatePresence>
+
+            {/* Success Toast */}
+            <AnimatePresence>
+                {showSuccess && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 bg-slate-900/90 backdrop-blur-xl text-white rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10"
+                    >
+                        <div className="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                            <Check size={14} />
+                        </div>
+                        <span className="text-sm font-bold tracking-tight">{showSuccess}</span>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>

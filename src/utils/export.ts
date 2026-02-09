@@ -1,5 +1,11 @@
 import { Expense } from '@/types';
 
+const getFilename = (extension: string) => {
+    const date = new Date().toISOString().split('T')[0];
+    const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
+    return `SpentWise_Export_${date}_${time}.${extension}`;
+};
+
 export const exportExpensesToCSV = (expenses: Expense[]) => {
     if (expenses.length === 0) return;
 
@@ -21,9 +27,27 @@ export const exportExpensesToCSV = (expenses: Expense[]) => {
 
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `spentwise_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', getFilename('csv'));
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+};
+
+export const exportExpensesToJSON = (expenses: Expense[]) => {
+    if (expenses.length === 0) return;
+
+    const jsonContent = JSON.stringify(expenses, null, 2);
+    const blob = new Blob([jsonContent], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', getFilename('json'));
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 };

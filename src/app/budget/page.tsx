@@ -84,15 +84,10 @@ export default function BudgetPage() {
     return (
         <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6">
             <div className="max-w-3xl mx-auto space-y-6">
-                <header className="flex items-center gap-4">
-                    <Link href="/" className="p-2 hover:bg-white bg-white/50 border border-slate-200 rounded-xl transition-all hover:shadow-sm">
-                        <ArrowLeft size={20} />
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Monthly Budget</h1>
-                        <p className="text-sm text-slate-500">Set limits and track your spending goals</p>
-                    </div>
-                </header>
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Monthly Budget</h1>
+                    <p className="text-sm text-slate-500">Set limits and track your spending goals</p>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <motion.div

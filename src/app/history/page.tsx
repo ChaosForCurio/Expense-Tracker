@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Filter, Calendar, Search, Trash2, LayoutGrid, List } from 'lucide-react';
-import Link from 'next/link';
+import { Filter, Calendar, Search, Trash2, LayoutGrid, List } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useExpenses } from '@/context/ExpenseContext';
 import { Category, CATEGORIES } from '@/types';
@@ -49,15 +48,10 @@ export default function HistoryPage() {
     return (
         <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6">
             <div className="max-w-5xl mx-auto space-y-6">
-                <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <Link href="/" className="p-2 hover:bg-white bg-white/50 border border-slate-200 rounded-xl transition-all hover:shadow-sm">
-                            <ArrowLeft size={20} />
-                        </Link>
-                        <div>
-                            <h1 className="text-2xl font-bold text-slate-900">Expense History</h1>
-                            <p className="text-sm text-slate-500">Track and manage your past spending</p>
-                        </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">Expense History</h1>
+                        <p className="text-sm text-slate-500">Track and manage your past spending</p>
                     </div>
                     <div className="flex items-center gap-2 bg-white/50 p-1 border border-slate-200 rounded-xl">
                         <button
@@ -79,7 +73,7 @@ export default function HistoryPage() {
                             <LayoutGrid size={18} />
                         </button>
                     </div>
-                </header>
+                </div>
 
                 <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
