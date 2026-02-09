@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Trash2, CreditCard, ShoppingBag, Utensils, Car, Film, HeartPulse, MoreHorizontal } from 'lucide-react';
+import { Trash2, CreditCard, ShoppingBag, Utensils, Car, Film, HeartPulse, MoreHorizontal, Edit2 } from 'lucide-react';
 import { Expense, Category } from '@/types';
 import { format } from 'date-fns';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -9,6 +9,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 interface ExpenseListProps {
   expenses: Expense[];
   onDelete: (id: string) => void;
+  onEdit: (expense: Expense) => void;
 }
 
 const CategoryIcon: React.FC<{ category: Category }> = ({ category }) => {
@@ -33,7 +34,7 @@ const CategoryColor: Record<Category, string> = {
   Other: 'bg-slate-100 text-slate-600',
 };
 
-export const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDelete }) => {
+export const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDelete, onEdit }) => {
   const { formatCurrency } = useCurrency();
 
   if (expenses.length === 0) {
@@ -92,12 +93,22 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDelete }) 
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => onDelete(expense.id)}
-                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => onEdit(expense)}
+                        className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        title="Edit"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => onDelete(expense.id)}
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        title="Delete"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -122,11 +133,17 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDelete }) 
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <span className="font-bold text-slate-800">{formatCurrency(expense.amount)}</span>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <span className="font-bold text-slate-800 mr-2">{formatCurrency(expense.amount)}</span>
+              <button
+                onClick={() => onEdit(expense)}
+                className="text-slate-300 hover:text-indigo-500 p-2"
+              >
+                <Edit2 size={18} />
+              </button>
               <button
                 onClick={() => onDelete(expense.id)}
-                className="text-slate-300 hover:text-red-500 p-1"
+                className="text-slate-300 hover:text-red-500 p-2"
               >
                 <Trash2 size={18} />
               </button>

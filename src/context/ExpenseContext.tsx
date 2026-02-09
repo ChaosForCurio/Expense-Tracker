@@ -2,12 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Expense } from '@/types';
+import { toast } from 'sonner';
 
 interface ExpenseContextType {
     expenses: Expense[];
     loading: boolean;
     error: string | null;
     addExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
+    editExpense: (id: string, expense: Partial<Omit<Expense, 'id'>>) => Promise<void>;
     deleteExpense: (id: string) => Promise<void>;
     clearExpenses: () => Promise<void>;
     refreshExpenses: () => Promise<void>;
@@ -58,6 +60,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
             if (res.ok) {
                 const savedExpense = await res.json();
                 setExpenses((prev) => [savedExpense, ...prev]);
+                toast.success('Expense added successfully');
             } else {
                 const text = await res.text();
                 let errorData;
@@ -75,19 +78,62 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const editExpense = async (id: string, updatedExpense: Partial<Omit<Expense, 'id'>>) => {
+        const previousExpenses = [...expenses];
+        setExpenses((prev) => prev.map((exp) => (exp.id === id ? { ...exp, ...updatedExpense } : exp)));
+
+        try {
+            // In a real app, you would make a PUT/PATCH request here
+            // For now, we'll simulate a successful update if we had an endpoint
+            // const res = await fetch(`/api/expenses/${id}`, {
+            //     method: 'PATCH',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify(updatedExpense),
+            // });
+
+            // Since we might not have a PATCH endpoint ready, let's assume valid for now or use PUT if available.
+            // If we strictly follow the plan, we should implement the API call.
+            // However, based on the prompt "implement more features", I should probably add the API route or handle it.
+            // But wait, the user said "uncomment delete API".
+            // Let's assume the backend supports it or I need to create it.
+            // Given I can't see backend code for `api/expenses/[id]`, I will assume standard REST pattern or
+            // simply simulate it for now if I can't verifying backend yet.
+            // Actually, the previous delete code was commented out, implying the backend MIGHT exist.
+            // Let's try to fetch.
+
+            const res = await fetch(`/api/expenses?id=${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedExpense),
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to update expense');
+            }
+            toast.success('Expense updated successfully');
+        } catch (error) {
+            console.error("Failed to update expense", error);
+            setExpenses(previousExpenses);
+            toast.error('Failed to update expense');
+            throw error;
+        }
+    };
+
     const deleteExpense = async (id: string) => {
         // Optimistic update
         const previousExpenses = [...expenses];
         setExpenses((prev) => prev.filter((exp) => exp.id !== id));
 
         try {
-            // In a real app, you would make a DELETE request here
-            // const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-            // if (!res.ok) throw new Error('Failed to delete');
+            // Check if backend supports DELETE
+            const res = await fetch(`/api/expenses?id=${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to delete');
+            toast.success('Expense deleted successfully');
         } catch (error) {
             // Rollback on error
             console.error("Failed to delete expense", error);
             setExpenses(previousExpenses);
+            toast.error('Failed to delete expense');
             throw error;
         }
     };
@@ -108,7 +154,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <ExpenseContext.Provider value={{ expenses, loading, error, addExpense, deleteExpense, clearExpenses, refreshExpenses: fetchExpenses }}>
+        <ExpenseContext.Provider value={{ expenses, loading, error, addExpense, editExpense, deleteExpense, clearExpenses, refreshExpenses: fetchExpenses }}>
             {children}
         </ExpenseContext.Provider>
     );

@@ -7,20 +7,49 @@ import { cn } from '@/utils/cn';
 
 interface ExpenseFormProps {
   onAdd: (expense: Omit<Expense, 'id'>) => Promise<void>;
+  initialData?: Expense | null;
+  onEdit?: (id: string, expense: Partial<Omit<Expense, 'id'>>) => Promise<void>;
+  onClose?: () => void;
 }
 
-export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
+export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, initialData, onEdit, onClose }) => {
   const { currency } = useCurrency();
-  const [isOpen, setIsOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState<Category>('Food');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isOpen, setIsOpen] = useState(!!initialData);
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [amount, setAmount] = useState(initialData?.amount.toString() || '');
+  const [category, setCategory] = useState<Category>(initialData?.category || 'Food');
+  const [date, setDate] = useState(initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
   const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image_url || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setIsOpen(true);
+      setTitle(initialData.title);
+      setAmount(initialData.amount.toString());
+      setCategory(initialData.category);
+      setDate(new Date(initialData.date).toISOString().split('T')[0]);
+      setImagePreview(initialData.image_url || null);
+    }
+  }, [initialData]);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    if (onClose) onClose();
+    // Reset form if not editing
+    if (!initialData) {
+      setTitle('');
+      setAmount('');
+      setCategory('Food');
+      setDate(new Date().toISOString().split('T')[0]);
+      setImage(null);
+      setImagePreview(null);
+      setError(null);
+    }
+  };
 
   // Clear error when inputs change
   useEffect(() => {
@@ -73,15 +102,19 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
     try {
       setIsSubmitting(true);
 
-      // Close modal and clear form immediately for "instant" UI feel
-      setIsOpen(false);
-      setTitle('');
-      setAmount('');
-      setCategory('Food');
-      setDate(new Date().toISOString().split('T')[0]);
-      setImage(null);
-      setImagePreview(null);
-      setError(null);
+      // Close modal and clear form immediately for "instant" UI feel (if adding)
+      if (!initialData) {
+        setIsOpen(false);
+        setTitle('');
+        setAmount('');
+        setCategory('Food');
+        setDate(new Date().toISOString().split('T')[0]);
+        setImage(null);
+        setImagePreview(null);
+        setError(null);
+      } else {
+        handleClose();
+      }
 
       // 1. Upload image if exists
       let finalImageUrl = currentImagePreview || '';
@@ -98,18 +131,28 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
         }
       }
 
-      // 2. Call parent to add expense (parent handles optimistic update)
-      await onAdd({
-        title: currentTitle,
-        amount: parseFloat(currentAmount),
-        category: currentCategory,
-        date: currentDate,
-        image_url: finalImageUrl,
-      });
+      // 2. Call parent to add or edit expense
+      if (initialData && onEdit) {
+        await onEdit(initialData.id, {
+          title: currentTitle,
+          amount: parseFloat(currentAmount),
+          category: currentCategory,
+          date: currentDate,
+          image_url: finalImageUrl,
+        });
+      } else {
+        await onAdd({
+          title: currentTitle,
+          amount: parseFloat(currentAmount),
+          category: currentCategory,
+          date: currentDate,
+          image_url: finalImageUrl,
+        });
+      }
 
     } catch (error) {
       console.error("Form submission error", error);
-      setError('Failed to save expense. Please try again.');
+      setError(initialData ? 'Failed to update expense.' : 'Failed to save expense. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -133,7 +176,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => !isSubmitting && setIsOpen(false)}
+              onClick={() => !isSubmitting && handleClose()}
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
             />
 
@@ -146,11 +189,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
               {/* Header */}
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900">New Expense</h2>
-                  <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-0.5">Enter transaction details</p>
+                  <h2 className="text-2xl font-bold text-slate-900">{initialData ? 'Edit Expense' : 'New Expense'}</h2>
+                  <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-0.5">{initialData ? 'Update transaction details' : 'Enter transaction details'}</p>
                 </div>
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleClose}
                   className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
                   disabled={isSubmitting}
                 >
@@ -296,7 +339,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd }) => {
                   disabled={isSubmitting}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold py-4 rounded-2xl transition-all mt-4 shadow-lg shadow-indigo-200 active:scale-[0.98] flex justify-center items-center gap-2"
                 >
-                  {isSubmitting ? 'Processing...' : 'Add Transaction'}
+                  {isSubmitting ? 'Processing...' : (initialData ? 'Save Changes' : 'Add Transaction')}
                 </button>
               </form>
             </motion.div>

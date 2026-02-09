@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Script from "next/script";
 import "./globals.css";
+import { ClickSoundEffect } from '@/components/ClickSoundEffect';
 import { ClientProviders } from '@/components/ClientProviders';
 import { PageTransition } from '@/components/PageTransition';
 import { Navbar } from '@/components/Navbar';
@@ -35,6 +36,7 @@ export default function RootLayout({
                 </Script>
                 <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>}>
                     <ClientProviders>
+                        <ClickSoundEffect />
                         <Navbar />
                         <PageTransition>
                             <main className="pt-20 min-h-screen">

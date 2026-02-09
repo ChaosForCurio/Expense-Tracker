@@ -1,5 +1,7 @@
 'use client';
 
+import { Toaster } from 'sonner';
+
 import { CurrencyProvider } from '@/context/CurrencyContext';
 import { ExpenseProvider } from '@/context/ExpenseContext';
 import { StackProvider, StackTheme } from "@stackframe/stack";
@@ -13,6 +15,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
                 <ExpenseProvider>
                     <CurrencyProvider>
                         {children}
+                        <Toaster position="top-center" richColors />
                     </CurrencyProvider>
                 </ExpenseProvider>
             </StackTheme>

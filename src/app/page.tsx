@@ -8,18 +8,43 @@ import { ExpenseList } from '@/components/ExpenseList';
 import { Summary } from '@/components/Summary';
 import { useExpenses } from '@/context/ExpenseContext';
 import { motion } from 'framer-motion';
+import { Expense } from '@/types';
+import { ExpenseForm } from '@/components/ExpenseForm';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { toast } from 'sonner';
 
 export default function Home() {
-    const { expenses, loading, deleteExpense } = useExpenses();
+    const { expenses, loading, deleteExpense, editExpense, addExpense } = useExpenses();
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
+    const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    const handleDeleteExpense = async (id: string) => {
+    const handleDeleteClick = (id: string) => {
+        setDeletingId(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!deletingId) return;
+        setIsDeleting(true);
         try {
-            await deleteExpense(id);
+            await deleteExpense(deletingId);
+            setDeletingId(null);
         } catch (error) {
-            alert('Failed to delete expense.');
+            // Error handling is done in context with toast
+        } finally {
+            setIsDeleting(false);
         }
+    };
+
+    const handleEditClick = (expense: Expense) => {
+        setEditingExpense(expense);
+    };
+
+    const handleEditSubmit = async (id: string, updatedExpense: Partial<Omit<Expense, 'id'>>) => {
+        await editExpense(id, updatedExpense);
+        setEditingExpense(null);
     };
 
     const filteredExpenses = useMemo(() => {
@@ -101,11 +126,40 @@ export default function Home() {
                         {loading ? (
                             <p className="text-center text-slate-500 py-10">Loading expenses...</p>
                         ) : (
-                            <ExpenseList expenses={filteredExpenses} onDelete={handleDeleteExpense} />
+                            <ExpenseList
+                                expenses={filteredExpenses}
+                                onDelete={handleDeleteClick}
+                                onEdit={handleEditClick}
+                            />
                         )}
                     </motion.div>
                 </motion.div>
             </main>
+
+            {/* Edit Modal */}
+            {editingExpense && (
+                <ExpenseForm
+                    initialData={editingExpense}
+                    onAdd={addExpense} // Not used when editing but required by types if not optional. Wait, I made it optional? No, onAdd is required in ExpenseFormProps.
+                    // Actually onAdd is used for "Add" mode. In "Edit" mode we use onEdit.
+                    // I should check ExpenseFormProps again. onAdd is required.
+                    // I will pass a dummy or the actual add function.
+                    onEdit={handleEditSubmit}
+                    onClose={() => setEditingExpense(null)}
+                />
+            )}
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmDialog
+                isOpen={!!deletingId}
+                title="Delete Expense"
+                message="Are you sure you want to delete this expense? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                onConfirm={confirmDelete}
+                onCancel={() => setDeletingId(null)}
+                isLoading={isDeleting}
+            />
 
             <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-slate-400 text-sm">
                 <p>© {new Date().getFullYear()} SpendWise Personal Finance Tracker</p>
