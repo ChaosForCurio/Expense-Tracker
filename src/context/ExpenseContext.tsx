@@ -23,16 +23,21 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState<string | null>(null);
 
     const fetchExpenses = async () => {
-        setLoading(true);
+        // Only show loading if we have no data yet
+        if (expenses.length === 0) {
+            setLoading(true);
+        }
         setError(null);
         try {
-            // Fetch ALL expenses (no filters) to populate the global state
             const res = await fetch('/api/expenses');
             if (res.ok) {
                 const data = await res.json();
                 setExpenses(data);
+                // Cache to local storage
+                localStorage.setItem('spendwise_expenses', JSON.stringify(data));
             } else if (res.status === 401) {
                 setExpenses([]);
+                localStorage.removeItem('spendwise_expenses');
             } else {
                 const text = await res.text();
                 throw new Error(text || 'Failed to fetch expenses');
@@ -46,6 +51,17 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     };
 
     useEffect(() => {
+        // Hydrate from localStorage immediately
+        const cachedExpenses = localStorage.getItem('spendwise_expenses');
+        if (cachedExpenses) {
+            try {
+                const parsed = JSON.parse(cachedExpenses);
+                setExpenses(parsed);
+                setLoading(false); // Stop loading early if we have cache
+            } catch (e) {
+                console.error('Failed to parse cached expenses', e);
+            }
+        }
         fetchExpenses();
     }, []);
 
@@ -59,7 +75,11 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
 
             if (res.ok) {
                 const savedExpense = await res.json();
-                setExpenses((prev) => [savedExpense, ...prev]);
+                setExpenses((prev) => {
+                    const updated = [savedExpense, ...prev];
+                    localStorage.setItem('spendwise_expenses', JSON.stringify(updated));
+                    return updated;
+                });
                 toast.success('Expense added successfully');
             } else {
                 const text = await res.text();
@@ -80,7 +100,11 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
 
     const editExpense = async (id: string, updatedExpense: Partial<Omit<Expense, 'id'>>) => {
         const previousExpenses = [...expenses];
-        setExpenses((prev) => prev.map((exp) => (exp.id === id ? { ...exp, ...updatedExpense } : exp)));
+        setExpenses((prev) => {
+            const updated = prev.map((exp) => (exp.id === id ? { ...exp, ...updatedExpense } : exp));
+            localStorage.setItem('spendwise_expenses', JSON.stringify(updated));
+            return updated;
+        });
 
         try {
             // In a real app, you would make a PUT/PATCH request here
@@ -122,7 +146,11 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     const deleteExpense = async (id: string) => {
         // Optimistic update
         const previousExpenses = [...expenses];
-        setExpenses((prev) => prev.filter((exp) => exp.id !== id));
+        setExpenses((prev) => {
+            const updated = prev.filter((exp) => exp.id !== id);
+            localStorage.setItem('spendwise_expenses', JSON.stringify(updated));
+            return updated;
+        });
 
         try {
             // Check if backend supports DELETE
@@ -143,6 +171,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
             const res = await fetch('/api/expenses', { method: 'DELETE' });
             if (res.ok) {
                 setExpenses([]);
+                localStorage.removeItem('spendwise_expenses');
             } else {
                 const text = await res.text();
                 throw new Error(text || 'Failed to clear expenses');

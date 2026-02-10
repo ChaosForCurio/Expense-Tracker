@@ -123,7 +123,7 @@ export default function Home() {
                             <h2 className="text-lg font-semibold text-slate-800">Recent Transactions</h2>
                             <span className="text-sm text-slate-500">{filteredExpenses.length} found</span>
                         </div>
-                        {loading ? (
+                        {loading && expenses.length === 0 ? (
                             <p className="text-center text-slate-500 py-10">Loading expenses...</p>
                         ) : (
                             <ExpenseList

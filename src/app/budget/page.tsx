@@ -19,6 +19,13 @@ export default function BudgetPage() {
     const [currentBudget, setCurrentBudget] = useState<{ amount: number } | null>(null);
 
     useEffect(() => {
+        // Hydrate budget from localStorage
+        const cachedBudget = localStorage.getItem(`spendwise_budget_${month}_${year}`);
+        if (cachedBudget) {
+            const parsed = JSON.parse(cachedBudget);
+            setAmount(parsed.amount?.toString() || '');
+            setCurrentBudget(parsed.amount ? { amount: parsed.amount } : null);
+        }
         fetchBudget();
     }, [month, year]);
 
@@ -29,9 +36,12 @@ export default function BudgetPage() {
                 const data = await res.json();
                 setAmount(data.amount?.toString() || '');
                 setCurrentBudget(data.amount ? { amount: data.amount } : null);
+                // Cache budget
+                localStorage.setItem(`spendwise_budget_${month}_${year}`, JSON.stringify(data));
             } else {
                 setAmount('');
                 setCurrentBudget(null);
+                localStorage.removeItem(`spendwise_budget_${month}_${year}`);
             }
         } catch (error) {
             console.error('Failed to fetch budget', error);
@@ -66,6 +76,7 @@ export default function BudgetPage() {
             if (res.ok) {
                 setMessage({ text: 'Budget saved successfully!', type: 'success' });
                 setCurrentBudget({ amount: Number(amount) });
+                localStorage.setItem(`spendwise_budget_${month}_${year}`, JSON.stringify({ amount: Number(amount) }));
             } else {
                 const data = await res.json();
                 setMessage({ text: data.error || 'Failed to save budget.', type: 'error' });
