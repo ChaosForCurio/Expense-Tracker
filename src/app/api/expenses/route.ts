@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { processRecurringExpenses } from '@/lib/automation';
 import { stackServerApp } from "@/stack-server";
 
 export async function GET(request: NextRequest) {
@@ -8,6 +9,11 @@ export async function GET(request: NextRequest) {
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        // Trigger recurring expenses processing
+        await processRecurringExpenses(user.id).catch(err =>
+            console.error('Error in background automation:', err)
+        );
 
         const { searchParams } = new URL(request.url);
         const month = searchParams.get('month');
@@ -43,9 +49,17 @@ export async function GET(request: NextRequest) {
         const result = await query(sql, params);
         return NextResponse.json(result.rows);
     } catch (error: any) {
-        console.error('Error fetching expenses:', error);
+        console.error('Error fetching expenses:', {
+            message: error.message,
+            stack: error.stack,
+            error: error
+        });
+        const details = error.errors ? error.errors.map((e: any) => e.message).join('; ') : (error.message || String(error));
         return NextResponse.json(
-            { error: 'Failed to fetch expenses', details: error.message },
+            {
+                error: 'Failed to fetch expenses',
+                details: `Connectivity Error: ${details}`
+            },
             { status: 500 }
         );
     }

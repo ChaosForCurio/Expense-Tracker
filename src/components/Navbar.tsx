@@ -22,7 +22,8 @@ import { useExpenses } from '@/context/ExpenseContext';
 const NAV_LINKS = [
     { href: '/', label: 'Overview', icon: LayoutDashboard },
     { href: '/history', label: 'History', icon: History },
-    { href: '/budget', label: 'Budget', icon: PieChart },
+    { href: '/reports', label: 'Reports', icon: PieChart },
+    { href: '/budget', label: 'Budget', icon: Wallet },
     { href: '/settings', label: 'Settings', icon: Settings },
 ];
 

@@ -15,6 +15,7 @@ export interface Expense {
   category: Category;
   note?: string;
   image_url?: string;
+  user_id?: string;
 }
 
 export const CATEGORIES: Category[] = [

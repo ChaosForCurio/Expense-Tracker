@@ -6,6 +6,7 @@ import { ClickSoundEffect } from '@/components/ClickSoundEffect';
 import { ClientProviders } from '@/components/ClientProviders';
 import { PageTransition } from '@/components/PageTransition';
 import { Navbar } from '@/components/Navbar';
+import { AIChat } from '@/components/AIChat';
 
 export const metadata: Metadata = {
     title: "SpendWise | Personal Finance Tracker",
@@ -38,6 +39,7 @@ export default function RootLayout({
                     <ClientProviders>
                         <ClickSoundEffect />
                         <Navbar />
+                        <AIChat />
                         <PageTransition>
                             <main className="pt-20 min-h-screen">
                                 {children}

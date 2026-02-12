@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Filter, Calendar, Search, Trash2, LayoutGrid, List } from 'lucide-react';
+import { Filter, Calendar, Search, Trash2, LayoutGrid, List, AlertCircle } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useExpenses } from '@/context/ExpenseContext';
 import { Category, CATEGORIES } from '@/types';
@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 
 export default function HistoryPage() {
     const { formatCurrency } = useCurrency();
-    const { expenses, loading, error: contextError, deleteExpense } = useExpenses();
+    const { expenses, loading, error, deleteExpense, refreshExpenses, setDemoMode, isDemoMode } = useExpenses();
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [searchQuery, setSearchQuery] = useState('');
@@ -45,33 +45,77 @@ export default function HistoryPage() {
         visible: { y: 0, opacity: 1 }
     };
 
+    if (error) {
+        return (
+            <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6">
+                    <AlertCircle className="text-red-500" size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">Failed to load history</h2>
+                <p className="text-slate-500 mb-8 max-w-xs mx-auto">{error}</p>
+                <div className="flex flex-col gap-3 w-full max-w-xs">
+                    <button
+                        onClick={() => refreshExpenses()}
+                        className="bg-slate-900 text-white font-bold py-3 px-8 rounded-2xl hover:bg-slate-800 transition-all active:scale-95"
+                    >
+                        Try Again
+                    </button>
+                    <button
+                        onClick={() => setDemoMode(true)}
+                        className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-2xl hover:bg-indigo-700 transition-all active:scale-95"
+                    >
+                        Load Demo Data
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6">
             <div className="max-w-5xl mx-auto space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Expense History</h1>
-                        <p className="text-sm text-slate-500">Track and manage your past spending</p>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-4xl font-black text-slate-900 tracking-tight">Expense History</h1>
+                            {isDemoMode && (
+                                <span className="bg-indigo-600 text-white text-[10px] font-black uppercase px-2 py-1 rounded-md mt-1 animate-pulse">
+                                    Demo Mode
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-slate-500 mt-2 font-medium">Review and manage your past transactions</p>
                     </div>
-                    <div className="flex items-center gap-2 bg-white/50 p-1 border border-slate-200 rounded-xl">
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={cn(
-                                "p-2 rounded-lg transition-all",
-                                viewMode === 'list' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                            )}
-                        >
-                            <List size={18} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={cn(
-                                "p-2 rounded-lg transition-all",
-                                viewMode === 'grid' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                            )}
-                        >
-                            <LayoutGrid size={18} />
-                        </button>
+
+                    <div className="flex items-center gap-3">
+                        {isDemoMode && (
+                            <button
+                                onClick={() => setDemoMode(false)}
+                                className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-indigo-600 transition-all mr-2"
+                            >
+                                Exit Demo
+                            </button>
+                        )}
+                        <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={cn(
+                                    "p-2 rounded-lg transition-all",
+                                    viewMode === 'list' ? "bg-slate-900 text-white shadow-md" : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                <List size={20} />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={cn(
+                                    "p-2 rounded-lg transition-all",
+                                    viewMode === 'grid' ? "bg-slate-900 text-white shadow-md" : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                <LayoutGrid size={20} />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -139,13 +183,13 @@ export default function HistoryPage() {
                 </div>
 
                 <div className="space-y-4">
-                    {contextError && (
+                    {error && (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             className="bg-red-50 text-red-600 p-4 rounded-xl text-center border border-red-100"
                         >
-                            {contextError}
+                            {error}
                         </motion.div>
                     )}
 

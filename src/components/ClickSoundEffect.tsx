@@ -7,22 +7,36 @@ export function ClickSoundEffect() {
     const soundRef = useRef<Howl | null>(null);
 
     useEffect(() => {
-        // Initialize sound
-        soundRef.current = new Howl({
-            src: ['/audio/click.wav'],
-            html5: false,
-            volume: 0.5,
-            onload: () => console.log('Sound loaded successfully'),
-            onloaderror: (id, error) => console.error('Sound load error:', error),
-        });
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+        const playClick = () => {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        };
 
         const handleClick = (e: MouseEvent) => {
             const target = e.target as HTMLElement;
-            // Check if the clicked element or its parent is interactive
             const clickable = target.closest('button, a, [role="button"], input[type="submit"], input[type="button"]');
 
-            if (clickable && soundRef.current) {
-                soundRef.current.play();
+            if (clickable) {
+                playClick();
             }
         };
 
@@ -30,7 +44,7 @@ export function ClickSoundEffect() {
 
         return () => {
             window.removeEventListener('click', handleClick);
-            soundRef.current?.unload();
+            audioCtx.close();
         };
     }, []);
 

@@ -8,6 +8,8 @@ interface ExpenseContextType {
     expenses: Expense[];
     loading: boolean;
     error: string | null;
+    isDemoMode: boolean;
+    setDemoMode: (active: boolean) => void;
     addExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
     editExpense: (id: string, expense: Partial<Omit<Expense, 'id'>>) => Promise<void>;
     deleteExpense: (id: string) => Promise<void>;
@@ -21,8 +23,18 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isDemoMode, setIsDemoMode] = useState(false);
 
     const fetchExpenses = async () => {
+        // Use mock data if in demo mode
+        if (isDemoMode) {
+            const { MOCK_EXPENSES } = await import('@/lib/mockData');
+            setExpenses(MOCK_EXPENSES);
+            setLoading(false);
+            setError(null);
+            return;
+        }
+
         // Only show loading if we have no data yet
         if (expenses.length === 0) {
             setLoading(true);
@@ -53,17 +65,17 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         // Hydrate from localStorage immediately
         const cachedExpenses = localStorage.getItem('spendwise_expenses');
-        if (cachedExpenses) {
+        if (cachedExpenses && !isDemoMode) {
             try {
                 const parsed = JSON.parse(cachedExpenses);
                 setExpenses(parsed);
-                setLoading(false); // Stop loading early if we have cache
+                setLoading(false);
             } catch (e) {
                 console.error('Failed to parse cached expenses', e);
             }
         }
         fetchExpenses();
-    }, []);
+    }, [isDemoMode]);
 
     const addExpense = async (newExpense: Omit<Expense, 'id'>) => {
         try {
@@ -183,7 +195,18 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <ExpenseContext.Provider value={{ expenses, loading, error, addExpense, editExpense, deleteExpense, clearExpenses, refreshExpenses: fetchExpenses }}>
+        <ExpenseContext.Provider value={{
+            expenses,
+            loading,
+            error,
+            isDemoMode,
+            setDemoMode: setIsDemoMode,
+            addExpense,
+            editExpense,
+            deleteExpense,
+            clearExpenses,
+            refreshExpenses: fetchExpenses
+        }}>
             {children}
         </ExpenseContext.Provider>
     );

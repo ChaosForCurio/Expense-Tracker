@@ -17,7 +17,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, initialData, on
   const [isOpen, setIsOpen] = useState(!!initialData);
   const [title, setTitle] = useState(initialData?.title || '');
   const [amount, setAmount] = useState(initialData?.amount.toString() || '');
-  const [category, setCategory] = useState<Category>(initialData?.category || 'Food');
+  const [category, setCategory] = useState<Category>(initialData?.category || ('Food' as Category));
   const [date, setDate] = useState(initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image_url || null);
@@ -43,7 +43,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, initialData, on
     if (!initialData) {
       setTitle('');
       setAmount('');
-      setCategory('Food');
+      setCategory('Food' as Category);
       setDate(new Date().toISOString().split('T')[0]);
       setImage(null);
       setImagePreview(null);
@@ -107,7 +107,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, initialData, on
         setIsOpen(false);
         setTitle('');
         setAmount('');
-        setCategory('Food');
+        setCategory('Food' as Category);
         setDate(new Date().toISOString().split('T')[0]);
         setImage(null);
         setImagePreview(null);
